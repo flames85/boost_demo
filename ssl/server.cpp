@@ -38,7 +38,12 @@ class session
         {
             if (!error)
             {
-                std::cout << "Connected: " << &socket_ << std::endl;
+                std::cout << "[" 
+						  << socket_.lowest_layer().remote_endpoint().address().to_string() 
+						  << ":"
+						  << socket_.lowest_layer().remote_endpoint().port()
+						  << "] connected"
+						  << std::endl;
                 // 异步读
                 socket_.async_read_some(boost::asio::buffer(data_, max_length),
                         boost::bind(&session::handle_read, this,
@@ -47,7 +52,14 @@ class session
             }
             else
             {
-                std::cout << "Disconnect: " << &socket_ << " error:" << error.message() << std::endl;
+                std::cout << "[" 
+						  << socket_.lowest_layer().remote_endpoint().address().to_string() 
+						  << ":"
+						  << socket_.lowest_layer().remote_endpoint().port()
+						  << "] disconnect"
+						  << " error:" 
+						  << error.message() 
+						  << std::endl;
                 delete this;
             }
         }
@@ -67,7 +79,15 @@ class session
             char subject_name[256];
             X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
             X509_NAME_oneline(X509_get_subject_name(cert), subject_name, 256);
-            std::cout << "Verifying " << subject_name << "\n";
+
+			std::cout << "[" 
+				<< socket_.lowest_layer().remote_endpoint().address().to_string() 
+				<< ":"
+				<< socket_.lowest_layer().remote_endpoint().port()
+				<< "]"
+				<< " verifying:" 
+				<< subject_name 
+				<< std::endl;
 
             return preverified;
         }
@@ -78,7 +98,15 @@ class session
         {
             if (!error)
             {
-                std::cout <<"read: " << std::string(data_, bytes_transferred) << std::endl;
+				std::cout << "[" 
+					<< socket_.lowest_layer().remote_endpoint().address().to_string() 
+					<< ":"
+					<< socket_.lowest_layer().remote_endpoint().port()
+					<< "]"
+					<< " read:" 
+					<< std::string(data_, bytes_transferred) 
+					<< std::endl;
+
                 // 异步写
                 boost::asio::async_write(socket_,
                         boost::asio::buffer(data_, bytes_transferred),
@@ -87,7 +115,14 @@ class session
             }
             else
             {
-                std::cout << "Disconnect: " << &socket_ << " error:" << error.message() << std::endl;
+                std::cout << "[" 
+						  << socket_.lowest_layer().remote_endpoint().address().to_string() 
+						  << ":"
+						  << socket_.lowest_layer().remote_endpoint().port()
+						  << "] disconnect"
+						  << " error:" 
+						  << error.message() 
+						  << std::endl;
                 delete this;
             }
         }
@@ -105,15 +140,25 @@ class session
             }
             else
             {
-                std::cout << "Disconnect: " << &socket_ << " error:" << error.message() << std::endl;
+                std::cout << "[" 
+						  << socket_.lowest_layer().remote_endpoint().address().to_string() 
+						  << ":"
+						  << socket_.lowest_layer().remote_endpoint().port()
+						  << "] disconnect"
+						  << " error:" 
+						  << error.message() 
+						  << std::endl;
                 delete this;
             }
         }
 
     private:
-        ssl_socket socket_;
-        enum { max_length = 1024 };
-        char data_[max_length];
+        enum { 
+			max_length = 1024 
+		};
+
+        ssl_socket 		socket_;
+        char 			data_[max_length];
 };
 
 class server

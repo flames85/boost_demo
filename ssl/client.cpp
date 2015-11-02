@@ -36,26 +36,47 @@ class client
             // certificate authority.
 
             // In this example we will simply print the certificate's subject name.
+
+
+            if(!preverified) return false;
+
             char subject_name[256];
             X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
             X509_NAME_oneline(X509_get_subject_name(cert), subject_name, 256);
-            std::cout << "Verifying " << subject_name << "\n";
 
-            return preverified;
+            std::cout << "["
+                << socket_.lowest_layer().remote_endpoint().address().to_string()
+                << ":"
+                << socket_.lowest_layer().remote_endpoint().port()
+                << "]"
+                << " verifying:"
+                << subject_name
+                << std::endl;
+
+            return true;
         }
 
         void handle_connect(const boost::system::error_code& error)
         {
             if (!error)
             {
-                std::cout << "Connected: " << &socket_ << std::endl;
+                std::cout << "[" 
+                          << socket_.lowest_layer().remote_endpoint().address().to_string()
+                          << ":"
+                          << socket_.lowest_layer().remote_endpoint().port()
+                          << "] connected"
+                          << std::endl;
+
                 socket_.async_handshake(boost::asio::ssl::stream_base::client,
                         boost::bind(&client::handle_handshake, this,
                             boost::asio::placeholders::error));
             }
             else
             {
-                std::cout << "Connect failed: " << error.message() << "\n";
+                std::cout << "[server] connect failed"
+                          << " error:"
+                          << error.message()
+                          << std::endl;
             }
         }
 
@@ -75,17 +96,20 @@ class client
             }
             else
             {
-                std::cout << "Handshake failed: " << error.message() << "\n";
+                std::cout << "[server] handshake failed"
+                          << " error:"
+                          << error.message()
+                          << std::endl;
             }
         }
 
         // 写完
         void handle_write(const boost::system::error_code& error,
-                size_t bytes_transferred)
+                          size_t bytes_transferred)
         {
             if (!error)
             {
-				// 异步读
+                // 异步读
                 boost::asio::async_read(socket_,
                         boost::asio::buffer(reply_, bytes_transferred),
                         boost::bind(&client::handle_read, this,
@@ -94,11 +118,15 @@ class client
             }
             else
             {
-                std::cout << "Write failed: " << error.message() << "\n";
+
+                std::cout << "[server] write failed"
+                          << " error:"
+                          << error.message()
+                          << std::endl;
             }
         }
 
-		// 读完
+        // 读完
         void handle_read(const boost::system::error_code& error,
                 size_t bytes_transferred)
         {
@@ -120,14 +148,17 @@ class client
             }
             else
             {
-                std::cout << "Read failed: " << error.message() << "\n";
+                std::cout << "[server] read failed"
+                          << " error:"
+                          << error.message()
+                          << std::endl;
             }
         }
 
     private:
-        boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket_;
-        char request_[max_length];
-        char reply_[max_length];
+        boost::asio::ssl::stream<boost::asio::ip::tcp::socket>  socket_;
+        char                                                     request_[max_length];
+        char                                                     reply_[max_length];
 };
 
 int main(int argc, char* argv[])
@@ -159,7 +190,7 @@ int main(int argc, char* argv[])
 
         io_service.run();
 
-		std::cout << "out run" << std::endl;
+        std::cout << "out run" << std::endl;
     }
     catch (std::exception& e)
     {
