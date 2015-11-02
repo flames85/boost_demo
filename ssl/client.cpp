@@ -48,6 +48,7 @@ class client
         {
             if (!error)
             {
+                std::cout << "Connected: " << &socket_ << std::endl;
                 socket_.async_handshake(boost::asio::ssl::stream_base::client,
                         boost::bind(&client::handle_handshake, this,
                             boost::asio::placeholders::error));
@@ -62,10 +63,10 @@ class client
         {
             if (!error)
             {
+                // 异步写
                 std::cout << "Enter message: ";
                 std::cin.getline(request_, max_length);
                 size_t request_length = strlen(request_);
-
                 boost::asio::async_write(socket_,
                         boost::asio::buffer(request_, request_length),
                         boost::bind(&client::handle_write, this,
@@ -78,12 +79,13 @@ class client
             }
         }
 
-        // 客户端先写再读
+        // 写完
         void handle_write(const boost::system::error_code& error,
                 size_t bytes_transferred)
         {
             if (!error)
             {
+				// 异步读
                 boost::asio::async_read(socket_,
                         boost::asio::buffer(reply_, bytes_transferred),
                         boost::bind(&client::handle_read, this,
@@ -96,6 +98,7 @@ class client
             }
         }
 
+		// 读完
         void handle_read(const boost::system::error_code& error,
                 size_t bytes_transferred)
         {
@@ -104,6 +107,16 @@ class client
                 std::cout << "Reply: ";
                 std::cout.write(reply_, bytes_transferred);
                 std::cout << "\n";
+
+                // 异步写
+                std::cout << "Enter message: ";
+                std::cin.getline(request_, max_length);
+                size_t request_length = strlen(request_);
+                boost::asio::async_write(socket_,
+                        boost::asio::buffer(request_, request_length),
+                        boost::bind(&client::handle_write, this,
+                            boost::asio::placeholders::error,
+                            boost::asio::placeholders::bytes_transferred));
             }
             else
             {
@@ -145,6 +158,8 @@ int main(int argc, char* argv[])
         client c(io_service, ctx, iterator);
 
         io_service.run();
+
+		std::cout << "out run" << std::endl;
     }
     catch (std::exception& e)
     {

@@ -38,6 +38,8 @@ class session
         {
             if (!error)
             {
+                std::cout << "Connected: " << &socket_ << std::endl;
+                // 异步读
                 socket_.async_read_some(boost::asio::buffer(data_, max_length),
                         boost::bind(&session::handle_read, this,
                             boost::asio::placeholders::error,
@@ -45,6 +47,7 @@ class session
             }
             else
             {
+                std::cout << "Disconnect: " << &socket_ << " error:" << error.message() << std::endl;
                 delete this;
             }
         }
@@ -69,13 +72,14 @@ class session
             return preverified;
         }
 
-        // 服务端先读再写
+        // 读完
         void handle_read(const boost::system::error_code& error,
                 size_t bytes_transferred)
         {
             if (!error)
             {
                 std::cout <<"read: " << std::string(data_, bytes_transferred) << std::endl;
+                // 异步写
                 boost::asio::async_write(socket_,
                         boost::asio::buffer(data_, bytes_transferred),
                         boost::bind(&session::handle_write, this,
@@ -83,14 +87,17 @@ class session
             }
             else
             {
+                std::cout << "Disconnect: " << &socket_ << " error:" << error.message() << std::endl;
                 delete this;
             }
         }
 
+        // 写完
         void handle_write(const boost::system::error_code& error)
         {
             if (!error)
             {
+                // 异步读
                 socket_.async_read_some(boost::asio::buffer(data_, max_length),
                         boost::bind(&session::handle_read, this,
                             boost::asio::placeholders::error,
@@ -98,6 +105,7 @@ class session
             }
             else
             {
+                std::cout << "Disconnect: " << &socket_ << " error:" << error.message() << std::endl;
                 delete this;
             }
         }
