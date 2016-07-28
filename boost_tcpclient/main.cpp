@@ -7,7 +7,6 @@
 
 using namespace boost::asio;
 
-//#define MEM_FN(x)           boost::bind(&self_type::x, shared_from_this())
 #define MEM_FN1(x, y)       boost::bind(&self_type::x, shared_from_this(), y)
 #define MEM_FN2(x, y, z)    boost::bind(&self_type::x, shared_from_this(), y, z)
 
@@ -88,9 +87,8 @@ public:
         if ( !err)
         {
             std::string copy(read_buffer_, bytes - 1);
-            std::cout << "server echoed our " << message_ << ": " << (copy == message_ ? "OK" : "FAIL") << std::endl;
+            std::cout << "server echoed our " << message_ << ": " << copy << std::endl;
         }
-        stop();
     }
     void on_write(const error_code & err, size_t bytes)
     {
@@ -106,8 +104,6 @@ private:
 };
 
 
-std::string abc();
-
 int main(int argc, char* argv[])
 {
     ip::tcp::endpoint ep( ip::address::from_string("127.0.0.1"), 8001);
@@ -120,5 +116,7 @@ int main(int argc, char* argv[])
     }
 
     service.run();
+
+    return 0;
 }
 
